@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+	.subunit.ESX,
+	.subunit.SEC,
+	.subunit.SEM,
+	.subunit.ESI { fill: #dcd; }
+	.subunit.FXX { display: none; }
+	.subunit.AND { display: none; }
+	.subunit.PRX { display: none; }
+	.subunit.DZA { display: none; }
+	.subunit.MAR { display: none; }
+	.subunit-boundary {
+	  fill: none;
+	  stroke: #777;
+	  stroke-dasharray: 2,2;
+	  stroke-linejoin: round;
+	}
+	.subunit-boundary.FXX { stroke: rgb(170, 170, 170); }
+	.subunit-boundary.PRX { stroke: rgb(170, 170, 170); }
+	.subunit-boundary.MAR { stroke: rgb(170, 170, 170); }
+	.subunit-boundary.DZA { stroke: rgb(170, 170, 170); }
+	.place,
+	.place-label {
+  		fill: #444;
+	}
+
+text {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.subunit-label {
+  fill: #777;
+  fill-opacity: .5;
+  font-size: 20px;
+  font-weight: 300;
+  text-anchor: middle;
+}
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+var width = 1160,
+	height = 600;
+
+var projection = d3.geo.mercator()
+    	.center([-4.230638, 40.9798108])
+    	.scale(2500)
+
+var path = d3.geo.path()
+    .projection(projection)
+    .pointRadius(2);
+
+var svg = d3.select("body").append("svg")
+	.attr("width", width)
+	.attr("height", height);
+
+d3.json("esp.json", function(error, esp) {
+	if (error) return console.error(error);
+   svg.selectAll(".subunit")
+   		.data(topojson.feature(esp, esp.objects.subunits).features)
+  	.enter().append("path")
+    	.attr("class", function(d) { return "subunit " + d.id; })
+    	.attr("d", path);
+
+svg.append("path")
+	.datum(topojson.mesh(esp, esp.objects.subunits, function(a, b) {return a !== b && a.id !== "FXX"; }))
+	.attr("d", path)
+	.attr("class", "subunit-boundary");
+
+svg.append("path")
+	.datum(topojson.mesh(esp, esp.objects.subunits, function(a, b) {return a === b && a.id === "FXX"; }))
+	.attr("d", path)
+	.attr("class", "subunit-boundary FXX");
+
+svg.append("path")
+	.datum(topojson.mesh(esp, esp.objects.subunits, function(a, b) {return a !== b && a.id !== "PRX"; }))
+	.attr("d", path)
+	.attr("class", "subunit-boundary");
+
+svg.append("path")
+	.datum(topojson.mesh(esp, esp.objects.subunits, function(a, b) {return a === b && a.id === "PRX"; }))
+	.attr("d", path)
+	.attr("class", "subunit-boundary PRX");
+
+svg.append("path")
+	.datum(topojson.mesh(esp, esp.objects.subunits, function(a, b) {return a !== b && a.id !== "MAR"; }))
+	.attr("d", path)
+	.attr("class", "subunit-boundary MAR");
+
+svg.append("path")
+	.datum(topojson.mesh(esp, esp.objects.subunits, function(a, b) {return a === b && a.id === "MAR"; }))
+	.attr("d", path)
+	.attr("class", "subunit-boundary MAR");
+
+svg.append("path")
+	.datum(topojson.mesh(esp, esp.objects.subunits, function(a, b) {return a !== b && a.id !== "DZA"; }))
+	.attr("d", path)
+	.attr("class", "subunit-boundary");
+
+svg.append("path")
+	.datum(topojson.mesh(esp, esp.objects.subunits, function(a, b) {return a === b && a.id === "DZA"; }))
+	.attr("d", path)
+	.attr("class", "subunit-boundary DZA");
+
+svg.append("path")
+	.datum(topojson.feature(esp, esp.objects.places))
+	.attr("d", path)
+	.attr("class", "place");
+
+svg.selectAll(".subunit-label")
+    .data(topojson.feature(esp, esp.objects.subunits).features)
+  .enter().append("text")
+    .attr("class", function(d) { return "subunit-label " + d.id; })
+    .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+    .attr("dy", ".35em")
+    .text(function(d) { return d.properties.name; });
+
+svg.selectAll(".place-label")
+    .data(topojson.feature(esp, esp.objects.places).features)
+  .enter().append("text")
+    .attr("class", "place-label")
+    .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+    .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
+    .attr("dy", ".30em")
+    .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; })
+    .text(function(d) { return d.properties.name; });
+});
+</script>
